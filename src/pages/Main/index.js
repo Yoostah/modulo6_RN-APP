@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Keyboard, ActivityIndicator } from 'react-native';
+import { Keyboard, ActivityIndicator, Text } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
+
 import api from '../../services/api';
 import {
   Container,
@@ -16,6 +17,9 @@ import {
   Bio,
   ProfileButton,
   ProfileButtonText,
+  RemoveButton,
+  Actions,
+  WarningMessage,
 } from './styles';
 
 export default class Main extends Component {
@@ -30,6 +34,7 @@ export default class Main extends Component {
       newUser: '',
       users: [],
       loading: false,
+      error: '',
     };
   }
 
@@ -51,18 +56,41 @@ export default class Main extends Component {
 
   handleAddUser = async () => {
     const { users, newUser } = this.state;
+
     this.setState({ loading: true });
-    const response = await api.get(`/users/${newUser}`);
-    const data = {
-      name: response.data.name,
-      bio: response.data.bio,
-      login: response.data.login,
-      avatar: response.data.avatar_url,
-    };
 
-    this.setState({ users: [...users, data], newUser: '', loading: false });
+    try {
+      const response = await api.get(`/users/${newUser}`);
 
-    Keyboard.dismiss();
+      const checkUserExists = users.filter(user => {
+        return user.login === response.data.login;
+      });
+
+      if (checkUserExists.length) {
+        this.setState({ error: 'Usuário já cadastrado', loading: false });
+        Keyboard.dismiss();
+        return;
+      }
+
+      const data = {
+        name: response.data.name,
+        bio: response.data.bio,
+        login: response.data.login,
+        avatar: response.data.avatar_url,
+      };
+
+      this.setState({
+        users: [...users, data],
+        newUser: '',
+        loading: false,
+        error: '',
+      });
+
+      Keyboard.dismiss();
+    } catch (error) {
+      this.setState({ error: error.message, loading: false });
+      Keyboard.dismiss();
+    }
   };
 
   handleNavigate = user => {
@@ -70,10 +98,22 @@ export default class Main extends Component {
     navigation.navigate('User', { user });
   };
 
+  handleDeleteUser = async login => {
+    const { users } = this.state;
+    const data = users.filter(user => {
+      return user.login !== login;
+    });
+
+    this.setState({
+      users: data,
+    });
+  };
+
   render() {
-    const { users, newUser, loading } = this.state;
+    const { users, newUser, loading, error } = this.state;
     return (
       <Container>
+        <WarningMessage>{error !== '' ? error : null}</WarningMessage>
         <Form>
           <Input
             autoCorrect={false}
@@ -100,14 +140,22 @@ export default class Main extends Component {
               <Avatar source={{ uri: item.avatar }} />
               <Name>{item.name}</Name>
               <Bio>{item.bio}</Bio>
-
-              <ProfileButton
-                onPress={() => {
-                  this.handleNavigate(item);
-                }}
-              >
-                <ProfileButtonText>Ver Perfil</ProfileButtonText>
-              </ProfileButton>
+              <Actions>
+                <ProfileButton
+                  onPress={() => {
+                    this.handleNavigate(item);
+                  }}
+                >
+                  <ProfileButtonText>Ver Perfil</ProfileButtonText>
+                </ProfileButton>
+                <RemoveButton
+                  onPress={() => {
+                    this.handleDeleteUser(item.login);
+                  }}
+                >
+                  <Icon name="delete-forever" size={20} color="#FFF" />
+                </RemoveButton>
+              </Actions>
             </User>
           )}
         />
