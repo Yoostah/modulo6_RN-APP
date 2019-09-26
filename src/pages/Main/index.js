@@ -23,17 +23,15 @@ export default class Main extends Component {
     title: 'Usuários',
   };
 
-  static propTypes = {
-    navigation: PropTypes.shape({
-      navigate: PropTypes.func,
-    }).isRequired,
-  };
+  constructor() {
+    super();
 
-  state = {
-    newUser: '',
-    users: [],
-    loading: false,
-  };
+    this.state = {
+      newUser: '',
+      users: [],
+      loading: false,
+    };
+  }
 
   async componentDidMount() {
     const users = await AsyncStorage.getItem('users');
@@ -117,3 +115,9 @@ export default class Main extends Component {
     );
   }
 }
+
+Main.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func,
+  }).isRequired,
+};
