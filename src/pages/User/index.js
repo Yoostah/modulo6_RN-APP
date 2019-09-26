@@ -98,15 +98,13 @@ export default class User extends Component {
               data={starred}
               keyExtractor={repo => String(repo.id)}
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => this.handleRepoPage(item)}>
-                  <Repo>
-                    <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
-                    <Info>
-                      <Title>{item.name}</Title>
-                      <Author>{item.owner.login}</Author>
-                    </Info>
-                  </Repo>
-                </TouchableOpacity>
+                <Repo onPress={() => this.handleRepoPage(item)}>
+                  <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
+                  <Info>
+                    <Title>{item.name}</Title>
+                    <Author>{item.owner.login}</Author>
+                  </Info>
+                </Repo>
               )}
             />
             {refreshing && (
